@@ -1,0 +1,46 @@
+pr:
+  branches:
+    include:
+      - none
+  paths:
+    include:
+      - AVD-BICEP-main/BICEP/mainBuild.bicep
+
+trigger:
+  branches:
+    include:
+      - none
+  paths:
+    include:
+      - AVD-BICEP-main/BICEP/mainBuild.bicep
+
+variables:
+  templateFolderPath: $(Pipeline.Workspace)/s/AVD-BICEP-main/BICEP
+  templateFileBaseName: mainBuild # File without extension
+  location: "Australia East"
+  subscriptionId: ""
+  svcConnection: ""
+  adoEnvironment: "avd"
+  deploymentName: "avd_build"
+
+stages:
+  - template: /azure-pipelines/templates/build-template.yml@self
+    parameters:
+      testCondition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'Manual')))
+      templateFilePath: "$(templateFolderPath)/$(templateFileBaseName).bicep"
+      skipTests: "'apiVersions Should Be Recent','Template Should Not Contain Blanks','Parameter Types Should Be Consistent'"
+      continueOnFailedTests: false
+
+  - template: /azure-pipelines/templates/deploy-template.yml@self
+    parameters:
+      stage: Deploy
+      dependsOn: "Build"
+      condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'Manual')))
+      svcConnection: $(svcConnection)
+      subscriptionId: $(subscriptionId)
+      location: $(location)
+      adoEnvironment: $(adoEnvironment)
+      templateFileName: "$(templateFileBaseName).json"
+      parameterFilePath: "" # Set to empty since parameters are defined directly in Bicep template
+      deploymentName: $(deploymentName)
+      previewChanges: true
