@@ -18,8 +18,8 @@ variables:
   templateFolderPath: $(Pipeline.Workspace)/s/AVD-BICEP-main/BICEP
   templateFileBaseName: mainBuild # File without extension
   location: "Australia East"
-  subscriptionId: ""
-  svcConnection: ""
+  subscriptionId: "<your-subscription-id>"
+  svcConnection: "<your-service-connection>"
   adoEnvironment: "avd"
   deploymentName: "avd_build"
 
@@ -44,3 +44,14 @@ stages:
       parameterFilePath: "" # Set to empty since parameters are defined directly in Bicep template
       deploymentName: $(deploymentName)
       previewChanges: true
+
+  - stage: PostDeploymentValidation
+    dependsOn: Deploy
+    condition: succeeded()
+    jobs:
+      - job: ValidateDeployment
+        steps:
+          - script: |
+              echo "Running post-deployment validation..."
+              # Add validation scripts or tasks here
+            displayName: 'Post-deployment Validation'
